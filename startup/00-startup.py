@@ -36,10 +36,19 @@ if not is_re_worker_active():
     autoawait_in_bluesky_event_loop()
 
 
-tiled_server = SimpleTiledServer()
-tiled_client = from_uri(tiled_server.uri)
-tiled_writer = TiledWriter(tiled_client)
-RE.subscribe(tiled_writer)
+# Set up Tiled for data storage - wrapped in try/except for environments
+# where SimpleTiledServer may not work (e.g., tiled 0.2.1 has known issues)
+try:
+    tiled_server = SimpleTiledServer()
+    tiled_client = from_uri(tiled_server.uri)
+    tiled_writer = TiledWriter(tiled_client)
+    RE.subscribe(tiled_writer)
+except Exception as e:
+    print(f"Warning: Tiled setup failed ({type(e).__name__}: {e})")
+    print("Data will not be persisted to Tiled. Configure an external Tiled server if needed.")
+    tiled_server = None
+    tiled_client = None
+    tiled_writer = None
 
 
 def dump_doc_to_stdout(name, doc):
